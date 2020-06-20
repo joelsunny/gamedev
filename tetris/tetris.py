@@ -3,133 +3,12 @@ import pygame.freetype
 import random
 from pprint import pprint
 
-"""
-pygame cheatsheet
-    win = pygame.display.set_mode((width, width))
-
-    eventlist = pygame.event.get()
-        for event in eventlist:
-            if event.type == pygame.QUIT:
-    
-    pygame.draw.rect(surface, self.color, (i*dis+1,j*dis+1, dis-2, dis-2))
-
-    pygame.draw.line(surface, (125,125,125), (x,0),(x,width))
-
-    pygame.display.update()
-
-    surface.fill((0,0,0))
-"""
-
-# SHAPE FORMATS
-
-S = [[
-      '....',
-      '..00',
-      '.00.',
-      '....'],
-     [
-      '..0.',
-      '..00',
-      '...0',
-      '....']]
-
-Z = [[
-      '....',
-      '.00.',
-      '..00',
-      '....'],
-     [
-      '..0.',
-      '.00.',
-      '.0..',
-      '....']]
-
-I = [['..0.',
-      '..0.',
-      '..0.',
-      '..0.',
-      ],
-     ['....',
-      '0000',
-      '....',
-      '....',
-      ]]
-
-O = [[
-      '....',
-      '.00.',
-      '.00.',
-      '....']]
-
-J = [[
-      '.0..',
-      '.000',
-      '....',
-      '....'],
-     [
-      '..00',
-      '..0.',
-      '..0.',
-      '....'],
-     [
-      '....',
-      '.000',
-      '...0',
-      '....'],
-     [
-      '..0.',
-      '..0.',
-      '.00.',
-      '....']]
-
-L = [[
-      '...0',
-      '.000',
-      '....',
-      '....'],
-     [
-      '..0.',
-      '..0.',
-      '..00',
-      '....'],
-     [
-      '....',
-      '.000',
-      '.0..',
-      '....'],
-     [
-      '.00.',
-      '..0.',
-      '..0.',
-      '....']]
-
-T = [[
-      '..0.',
-      '.000',
-      '....',
-      '....'],
-     [
-      '..0.',
-      '..00',
-      '..0.',
-      '....'],
-     [
-      '....',
-      '.000',
-      '..0.',
-      '....'],
-     [
-      '..0.',
-      '.00.',
-      '..0.',
-      '....']]
-
-shapes = [S, Z, I, O, J, L, T]
-
 shapes = {
-    "rod" : [[(1,0),(1,1),(1,2),(1,3)], [(0,1),(1,1),(2,1),(3,1)]],
-    "cell": [[(0,0)]],
-    "dual": [[(0,0), (0,1), (0,2),(0,3), (0,4)], [(-1,1), (0,1)]]
+    "rod" : [[(0,0), (0,1), (0,2),(0,3), (0,4)], [(-2,1), (-1,1), (0,1), (1,1),(2,1)]],
+    "square": [[(0,0), (0,1),(1,0),(1,1)]],
+    "L" : [[(0,0), (0,1), (-1,0),(-2,0)], [(0,0), (-1,0),(-1,1), (-1,2)], [(-1,0), (-1,1),(0,1),(1,1)], [(1,-1),(1,0),(1,1), (0,1)]],
+    "zig": [[(-1,0), (-1,1),(0,1),(0,2)], [(0,1),(1,1),(-0,2), (-1,2)]],
+    "arrow": [[(0,0), (0,1), (0,2), (-1,1)], [(0,1), (-1,1), (1,1), (0,2)], [(-1,0), (-1,1), (-1,2), (0,1)], [(0,1), (-1,1), (1,1), (0,0)]]
 }
 
 class Piece:
@@ -141,14 +20,10 @@ class Piece:
         self.grid_h = grid_h
         self.grid_w = grid_w
         self.cells = list(map(lambda cell: (cell[0] +  self.row, cell[1] + self.col), self.shape[self.curr_orientation]))
-    
-    def draw(self, mat):
-        # calculate indices on the grid to be marked
-        pass
-    
+        
     def is_valid_cell(self, cell, grid):
         # check if cell is within the grid bounds
-        if cell[0] < 0 or cell[0] >= self.grid_h:
+        if cell[0] >= self.grid_h:
             if cell[0] == self.grid_h:
                 grid.on_bottom()
                 return False
@@ -160,63 +35,58 @@ class Piece:
 
     def is_occupied_cell(self, cell, grid):
         # pprint(grid.mat)
+        if cell[0] < 0:
+            return False
         if grid.mat[cell[0]][cell[1]] == 1:
             return True
         else:
             return False
 
     def move(self, dir, grid):
-        print("moving")
         new_r = self.row + dir[1]
         new_c = self.col + dir[0]
 
         new_cells = list(map(lambda cell: (cell[0] +  new_r, cell[1] + new_c), self.shape[self.curr_orientation]))
-        print(self.cells, new_cells)
+        # print(self.cells, new_cells)
         # if move is invalid return without changing
         for cell in new_cells:
             if self.is_valid_cell(cell, grid) == False:
-                print("invalid")
+                # print("invalid")
                 return True
 
         # if new pos is occupied signal False
         for cell in new_cells:
             if self.is_occupied_cell(cell, grid) == True:
-                print("occupied")
+                # print(f"occupied: {cell}")
                 # check if reached bottom
                 if dir == (0,1):
                     grid.on_bottom()
+                if cell[0] == 1:
+                    grid.on_failure()
                 return False
-
-        # # move the shape to new pos in mat, clear old cells
-        # for cell in self.cells:
-        #     grid.mat[cell[0]][cell[1]] = 0
 
         self.row = new_r
         self.col = new_c
-
-        # for cell in new_cells:
-        #     grid.mat[cell[0]][cell[1]] = 1
         
         self.cells = new_cells
-        print(self.cells)
         
     def rotate(self, grid):
-        print("rotating")
+        # print("rotating")
         new_orientation  = (self.curr_orientation + 1) % len(self.shape)
-        print(f"orientation = {new_orientation}")
+        # print(f"orientation = {new_orientation}")
         new_cells = list(map(lambda cell: (cell[0] +  self.row, cell[1] + self.col), self.shape[new_orientation]))
 
-        print(f"current = {self.cells}, new cells = {new_cells}")
+        # print(f"current = {self.cells}, new cells = {new_cells}")
         # if move is invalid return without changing
         for cell in new_cells:
             if self.is_valid_cell(cell, grid) == False:
-                print("invalid")
+                # print("invalid")
                 return True
 
         # if new pos is occupied return without changing
         for cell in new_cells:
             if self.is_occupied_cell(cell, grid) == True:
-                print("occupied")
+                # print("occupied")
                 return False
 
         # move the shape to new pos in mat
@@ -238,6 +108,7 @@ class Grid:
         self.cols = 15
         self.mat   = [ [0]*self.cols for i in range(0,self.rows) ]
         self.curr_piece = self.next_piece()
+        self.score = 0
 
     def move_piece(self):
         global fall_time, clock
@@ -252,6 +123,7 @@ class Grid:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
+                exit(0)
  
             keys = pygame.key.get_pressed()
             for key in keys:
@@ -280,11 +152,13 @@ class Grid:
         for row in range(self.rows):
             if self.mat[row] == [1]*self.cols:
                 print("collapsing")
+                self.score += 15
                 self.mat = [[0]*self.cols] + self.mat[0:row] + self.mat[row+1:]
                 pprint(self.mat)
 
     
     def on_bottom(self):
+        print("on_bottom")
         # move piece body to mat body
         for cell in self.curr_piece.cells:
             self.mat[cell[0]][cell[1]] = 1
@@ -292,17 +166,24 @@ class Grid:
         self.row_collapse()
         self.curr_piece = self.next_piece()
 
+    def on_failure(self):
+        main()
+
     def next_piece(self):
-        return Piece(shapes["dual"], 0, 7, 25, 15)
+        x = random.randrange(len(shapes))
+        key = list(shapes.keys())[x]
+        print(f"key = {key}")
+        return Piece(shapes[key], 0, 7, 25, 15)
 
     def color_cell(self, row, col, surface, color):
         pygame.draw.rect(surface, color, (self.sx + col*self.space, self.sy + row*self.space, self.space, self.space))
 
     def color_piece(self, surface, color=(0,255,0)):
         for cell in self.curr_piece.cells:
-            self.color_cell(cell[0], cell[1], surface, color)
+            if cell[0] >= 0:
+                self.color_cell(cell[0], cell[1], surface, color)
 
-    def draw(self, surface):
+    def draw(self, surface, writer):
         cols = self.w // self.space
         rows = self.h // self.space
         x, y = self.sx, self.sy
@@ -323,9 +204,11 @@ class Grid:
         for i in range(rows+1):
             pygame.draw.line(surface, (125,125,125), (self.sx, y), (self.sx + self.w, y))
             y += self.space
+        
+        # print score
+        score = f"Score: {self.score}"
+        writer.render_to(surface, (160, 630), score, (255, 255, 0))
 
-def redrawScene(surface):
-    pass
 
 def main():
     global width, height, space, writer, g, clock, fall_time
@@ -347,11 +230,7 @@ def main():
     while not done:
         pygame.time.delay(50)
         clock.tick(10)
-        g.draw(win)
-        # for event in pygame.event.get():
-        #     if event.type == pygame.QUIT:
-        #         pygame.quit()
-        # g.color_cell(10,3, win)
+        g.draw(win, writer)
         pygame.display.update()
 
 main()
