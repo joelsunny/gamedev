@@ -9,6 +9,7 @@ class Grid:
 
     def __init__(self):
         pygame.init()
+        pygame.display.set_caption('sudoku')
         self.surface = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.writer = pygame.freetype.SysFont("Arial", 24)
     
@@ -170,3 +171,5 @@ def solver():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 done = True
+
+solver()
