@@ -12,9 +12,9 @@ class Grid:
         self.surface = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
         self.writer = pygame.freetype.SysFont("Arial", 24)
     
-    def color_cell(self, row, col, num, color = (170,170,170)):
+    def color_cell(self, row, col, num, color = (0,200,0,0.25)):
         if num == 0:
-            pygame.draw.rect(self.surface, (170,170,170), (col*self.CELL+1, row*self.CELL+1, self.CELL-1, self.CELL-1))
+            pygame.draw.rect(self.surface, (0,200,0, 0.25), (col*self.CELL+1, row*self.CELL+1, self.CELL-1, self.CELL-1))
             return
         pygame.draw.rect(self.surface, color, (col*self.CELL+1, row*self.CELL+1, self.CELL-1, self.CELL-1))
         self.writer.render_to(self.surface, (col*self.CELL + self.CELL/2, row*self.CELL + self.CELL//3), str(num), (0, 0, 0))
@@ -160,6 +160,7 @@ def solver():
     clock = pygame.time.Clock()
     g.draw_grid()
     s = Sudoku(puzzle, g)
+    
     while not done:
         pygame.time.delay(50)
         clock.tick(10)
@@ -169,5 +170,3 @@ def solver():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 done = True
-
-generator()
